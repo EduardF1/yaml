@@ -1,0 +1,133 @@
+# key-value pairs
+app: user-authentication # here the value is a string, could also be set as 'user-authentication' or "user-authentication"
+port: 9000
+version: 1.7
+
+# objects
+microservice: # here, object with 3 properties
+  app: user-authentication
+  port: 9000
+  version: 1.7
+
+# lists of objects
+microservices:
+  - app: user-authentication
+    port: 9000
+    version: 1.7
+    deployed: off # booleans are [on, off]
+  - app: shopping-cart
+    port: 9002
+    version: 1.9
+
+# lists of simple objects
+microservices:
+  - user-authentication
+  - shopping-cart
+
+# nested objects (with list items)
+microservices:
+  - app: user-authentication
+    port: 9000
+    version: 1.7
+    deployed: off # booleans are [on, off]
+  - app: shopping-cart
+    port: 9002
+    versions: # alternatively [1.9, 2.0, 2.1] <> ["1.9", 2.0, 2.1]
+    - 1.9
+    - 2.0
+    - 2.1
+
+# Kubernetes pod example
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: nginx-vol
+      mountPath: /usr/nginx/html
+  - name: sidecar-container
+    image: curlimages/curl
+    command: ["/bin/sh"]
+    args: ["-c", "echo Hello from the sidecar container; sleep 300"]
+
+
+# multi-line strings (using a pipe)
+multilineStrings: |
+  this is a multiline string
+  and this is the next line
+  next line
+
+---
+
+singleLineStrings: >
+  this is a multiline string,
+  and this is the next line.
+  next line
+
+# a more realistic example
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config-file
+data:
+  mosquitto.conf: |
+    log_dest stdout
+    log_type all
+    log_timestamp true
+    listener 9001
+
+# pod configuration example
+command:
+  - sh
+  - "-c"
+  - |
+      #!/usr/bin/env bash -e
+      http () {
+           local path = "${1}"
+           set -- -XGET -s --fail
+           # some more stuff here
+           curl -k "$@" "http://localhost:5601${path}"
+      }
+      http "/app/kibana"
+
+# usage with environment variables (readiness probe), environment variables can be used with '$'
+
+command:
+  - /bin/sh
+  - -ec
+  - >-
+    mysql -h 127.0.0.1 -u root -p$MY_SQL_ROOT_PASSWORD -e 'SELECT 1'
+
+
+# placeholders
+
+apiVersion: v1
+kind: Service
+metadata:
+    name: {{ .Values.service.name}}
+spec:
+    selector:
+        app:  {{ .Values.service.app }}
+    ports:
+        - protocol: TCP
+          port: {{ .Values.service.port }}
+          targetPort: {{ .Values.service.tagetport }}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+    name: mosquitto-secret-file
+type: Opaque
+data:
+
+# defining multiple components is possible by using "---"
+
